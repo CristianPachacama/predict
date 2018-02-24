@@ -1,0 +1,106 @@
+---
+title: "GeoConvention 2018 <br> May 7-9, Calgary, Canada"
+output: markdowntemplates::skeleton
+---
+
+
+
+```{r setup, include=FALSE}
+#-----------------------------------------------------------------------------------------#
+# SET COMMON OPTIONS
+#-----------------------------------------------------------------------------------------#
+options(max.print="75")
+
+knitr::opts_chunk$set(dev='png', 
+                      echo = FALSE, 
+                      warning=FALSE, 
+                      message=FALSE, 
+                      fig.path = 'Figures/', 
+                      strip.white = TRUE, 
+                      dpi = 144)
+
+knitr::opts_knit$set(eval.after = 'fig.cap')
+knitr::opts_knit$set(width=75)
+
+#-----------------------------------------------------------------------------------------#
+# SET PRETTY LOOKING NUMBERS
+#-----------------------------------------------------------------------------------------#
+knitr::knit_hooks$set(inline = function(x) {
+      if(is.numeric(x)){
+          return(prettyNum(x, big.mark=","))
+      }else{
+          return(x)
+       }
+   })
+
+
+```
+
+
+```{r, eval=TRUE,  results='hide', message=FALSE}
+#-----------------------------------------------------------------------------------------#
+# NEEDED PACKAGES
+#-----------------------------------------------------------------------------------------#
+# library("packrat")
+library("Hmisc")
+library("rms")
+library("ggplot2")
+library("tidyr")
+library("stringr")
+library("pander")
+library("extrafont")
+library("plotly")
+library("viridis")
+library("readr")
+library("knitr")
+library("kableExtra")
+
+# font_import(pattern="[O/o]swald")
+# font_import(pattern="PT_Sans")
+# loadfonts(device="win")
+
+```
+
+
+```{r, eval=TRUE,  message=FALSE, cache=FALSE}
+#-----------------------------------------------------------------------------------------#
+# READ, LABEL, FORMAT DATA
+#-----------------------------------------------------------------------------------------#
+hunt <- read_csv("Table2_Hunt_2013_edit.csv")
+
+##-----------------------------------------------------------------------------------------#
+## MAKE SYNTACTICALLY VALID COL NAMES
+##-----------------------------------------------------------------------------------------#
+var.names <- tolower(colnames(hunt))
+var.names <- make.names(var.names, unique = TRUE, allow_ = FALSE)
+colnames(hunt) <- var.names
+
+## Sample
+kable(hunt, "html", align = "l") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+```
+
+## omthing
+```{r, results='asis', fig.width=14, fig.height=2.25}
+## Data
+d <- hunt %>% describe()
+html(d, size=100, scroll=FALSE)
+plot(d)
+
+```
+
+
+```{r, fig.width=14, fig.height=10}
+## Data
+library(car)
+scatterplotMatrix(~production + ., data = hunt)
+
+```
+
+
+
+```{r bib, include=FALSE}
+# KEEP THIS AT THE END OF THE DOCUMENT TO GENERATE A LOCAL bib FILE FOR PKGS USED
+knitr::write_bib(sub("^package:", "", grep("package", search(), value=TRUE)), file='skeleton.bib')
+```

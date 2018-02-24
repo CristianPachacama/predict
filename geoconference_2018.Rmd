@@ -1,0 +1,460 @@
+---
+title: "GeoConvention 2018 <br> May 7-9, Calgary, Canada"
+output: 
+  markdowntemplates::skeleton:
+  self_contained: TRUE
+  css: ts.css
+  toc: TRUE
+  smart: TRUE
+  lib_dir: libs
+  
+---
+
+
+
+
+```{r setup, include=FALSE}
+#-----------------------------------------------------------------------------------------#
+# SET COMMON OPTIONS
+#-----------------------------------------------------------------------------------------#
+options(max.print="75")
+
+knitr::opts_chunk$set(dev='svglite', 
+                      echo = FALSE, 
+                      warning=FALSE, 
+                      message=FALSE, 
+                      fig.path = 'Figures/', 
+                      strip.white = TRUE, 
+                      dpi = 144)
+
+knitr::opts_knit$set(eval.after = 'fig.cap')
+knitr::opts_knit$set(width=75)
+
+#-----------------------------------------------------------------------------------------#
+# SET PRETTY LOOKING NUMBERS
+#-----------------------------------------------------------------------------------------#
+knitr::knit_hooks$set(inline = function(x) {
+      if(is.numeric(x)){
+          return(prettyNum(x, big.mark=","))
+      }else{
+          return(x)
+       }
+   })
+
+
+```
+
+
+```{r, eval=TRUE,  results='hide', message=FALSE}
+#-----------------------------------------------------------------------------------------#
+# NEEDED PACKAGES
+#-----------------------------------------------------------------------------------------#
+# library("packrat")
+library("Hmisc")
+library("rms")
+library("ggplot2")
+library("tidyr")
+library("stringr")
+library("pander")
+library("extrafont")
+library("plotly")
+library("viridis")
+library("readr")
+library("knitr")
+library("kableExtra")
+library("tibble")
+library("broom")
+library("patchwork")
+
+# font_import(pattern="[O/o]swald")
+# font_import(pattern="PT_Sans")
+# font_import(pattern="[R/r]aleway")
+# loadfonts(device="win")
+
+```
+
+
+```{r, eval=TRUE,  message=FALSE, cache=FALSE}
+#-----------------------------------------------------------------------------------------#
+# READ, LABEL, FORMAT DATA
+#-----------------------------------------------------------------------------------------#
+hunt <- read_csv("Table2_Hunt_2013_edit.csv")
+
+##-----------------------------------------------------------------------------------------#
+## MAKE SYNTACTICALLY VALID COL NAMES
+##-----------------------------------------------------------------------------------------#
+var.names <- tolower(colnames(hunt))
+var.names <- make.names(var.names, unique = TRUE, allow_ = FALSE)
+colnames(hunt) <- var.names
+
+## Sample
+kable(hunt[1:5,], "html", align = "l") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+
+
+##-----------------------------------------------------------------------------------------#
+## ADD CATEGORICAL POSITION
+##-----------------------------------------------------------------------------------------#
+hunt %>%
+  mutate(position.cat = cut2(position, c(1, 2, 3))) %>%
+  as.tibble() -> hunt
+
+```
+
+```{r, results='asis', fig.width=14, fig.height=2.25, eval = FALSE}
+## Data
+d <- hunt %>% describe()
+html(d, size=100, scroll=FALSE)
+plot(d)
+
+```
+
+# Is There A Difference in Production? The Kruskal-Wallis Test 
+Suppose we are interested in assessing whether `production` changes according to `position`. The conventional approach is to perform ANOVA. However, ANOVA relies on normality and is sensitive to outliers. We can utilize the Kruskal-Wallis test, which is a rank based (i.e. non-parametric) test.
+
+From the boxplot below, it is not apparent whether there is a difference in production between `positions`:
+
+```{r, fig.width=4, fig.height=3.5}
+g1 <- ggplot(hunt, aes(x = position.cat, y = production)) +
+  geom_boxplot(fill = "grey60", alpha = 0.6, color = "grey60") +
+  scale_x_discrete() + 
+  xlab("Position") +
+  ylab("Production") +
+  theme_minimal(base_family = "Raleway", base_size = 9)
+
+dat <- ggplot_build(g1)$data[[1]]
+g1 + geom_segment(data=dat, aes(x=xmin, xend=xmax, y=middle, yend=middle), color = "coral2", size=1) 
+```
+
+<br>
+
+Let's perform the **Kruskal-Wallis** test:
+
+```{r, fig.width=4, fig.height=3.4}
+kw <- tidy(anova(ols(rank(production) ~ position.cat , data = hunt))) %>%
+  rename(` ` = `.rownames`)
+
+kable(kw, "html", align = "l", digits = 3) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F, position = "left") %>%
+    row_spec(1:1, bold = T)
+
+```
+
+A P-value of `r round(kw[1,6], 3)`, tells us that the probability of observing a difference in distribution equal to or more extreme than the one observed is `r round(kw[1,6], 3)*100`%. In other words, **it's rather unlikely that the difference in production is due to chance variation**.
+
+<br>
+
+# Distance Correlation
+The traditional Pearson correlation has numerous limitations. The Spearman correlation is generally preferred and avoids some of the limitations. A relatively new and powerful measure of correlation is the **[distance correlation](https://en.wikipedia.org/wiki/Distance_correlation)** [1]. 
+
+```{r, fig.width=6, fig.height=6, fig.cap="Distance correlation matrix. Colored boxes represent statistically significant correlations at the 10% significance level."}
+#-----------------------------------------------------------------------------------------#
+# DISTANCE CORRELATION
+#-----------------------------------------------------------------------------------------#
+##Corr matrix
+correlations <- sapply(1:8, function(r) {
+  sapply(1:8, function(c) {
+    energy::dcor(hunt[,r], hunt[,c])
+    })
+})
+colnames(correlations) <- rownames(correlations) <- colnames(hunt)[1:8]
+
+## P-values (2000 bootstrap resamples)
+cor.mtest <- function(mat, ...) {
+    mat <- as.matrix(mat)
+    n <- ncol(mat)
+    p.mat<- matrix(NA, n, n)
+    diag(p.mat) <- 0
+    for (i in 1:(n - 1)) {
+        for (j in (i + 1):n) {
+            tmp <- energy::dcov.test(mat[, i], mat[, j], index = 1.0, R=2000)
+            p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
+        }
+    }
+  colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
+  p.mat
+}
+p.mat <- cor.mtest(correlations)
+
+
+library(corrplot)
+par(family = 'Raleway')
+par(pin = c(3,6))
+par(ps=9)
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+corrplot(correlations,
+         method = "color",
+         col = col(200),
+         type = "upper",
+         order = "hclust",
+         addCoef.col = "black",
+         tl.col = "black",
+         tl.srt = 45,
+         p.mat = p.mat,
+         sig.level = 0.10,
+         insig = "blank",
+         diag = FALSE,
+         bg = "grey90",
+         outline = TRUE,
+         addgrid.col = "white",
+         cl.lim = c(0, 1),
+         tl.cex = 1.0,
+         cl.cex = 0.8,
+         cl.pos = "n")
+
+```
+
+
+[1] *Among measures of correlations capable of detecting non-linear association, MIC (maximal information criterion, Reshef et al. (2011)) has been touted as a powerful measures. However, several authors (Kinney and Atwal (2013), Simon and Tibshirani (2014)) point to a number of problems with MIC and suggest to utilize distance correlation instead: "We believe that the recently proposed distance correlation measure of Székely & Rizzo (2009) is a more powerful technique that is simple, easy to compute and should be considered for general use".*
+
+<br><br>
+
+# Smoothers
+Correlation matrices are useful to visualize combinations of pairwise correlations. There is, however, more information to be had by plotting the data and adding a trend line. One of the most flexible is Cleveland's [LOESS](https://en.wikipedia.org/wiki/Local_regression) (locally weighted scatterplot smoothing). Let's plot the LOESS curves for each variable against production, separate for each `position`.
+
+
+```{r, fig.width=10, fig.height=8.5}
+g1 <- ggplot(hunt, aes(y = production, x = gross.pay, colour = factor(position.cat))) +
+  stat_plsmo(fullrange = TRUE) + 
+  geom_point() +
+  xlab("Gross Pay") +
+  ylab("Production") +
+  theme_minimal(base_family = "Raleway", base_size = 10) +
+  scale_color_discrete(guide = guide_legend(title = "Position")) +
+  theme(legend.position="none")
+
+g2 <- ggplot(hunt, aes(y = production, x = phi.h, colour = factor(position.cat))) +
+  stat_plsmo(fullrange = TRUE) + 
+  geom_point() +
+  xlab("Phi-h") +
+  ylab("Production") +
+  theme_minimal(base_family = "Raleway", base_size = 10) +
+  scale_color_discrete(guide = guide_legend(title = "Position")) +
+  theme(legend.position="none")
+
+
+g3 <- ggplot(hunt, aes(y = production, x = pressure, colour = factor(position.cat))) +
+  stat_plsmo(fullrange = TRUE) + 
+  geom_point() +
+  xlab("Pressure") +
+  ylab("Production") +
+  theme_minimal(base_family = "Raleway", base_size = 10) +
+  scale_color_discrete(guide = guide_legend(title = "Position")) +
+  theme(legend.position="none")
+
+g4 <- ggplot(hunt, aes(y = production, x = random.1, colour = factor(position.cat))) +
+  stat_plsmo(fullrange = TRUE) + 
+  geom_point() +
+  xlab("Random Var") +
+  ylab("Production") +
+  theme_minimal(base_family = "Raleway", base_size = 10) +
+  scale_color_discrete(guide = guide_legend(title = "Position")) +
+  theme(legend.position="none")
+
+g5 <- ggplot(hunt, aes(y = production, x = gross.pay.transform, colour = factor(position.cat))) +
+  stat_plsmo(fullrange = TRUE) + 
+  geom_point() +
+  xlab("Gross Pay (transformed)") +
+  ylab("Production") +
+  theme_minimal(base_family = "Raleway", base_size = 10) +
+  scale_color_discrete(guide = guide_legend(title = "Position")) +
+  theme(legend.position="none")
+
+
+g1+g2+g3+g4+g5
+
+```
+
+*Scatterplots of production against each variable by position (red: blue:). A LOESS curve was added to highlight the overall trend.*
+
+<br><br>
+
+# Variable Selection
+Which variables should we focus on in understanding production? Which variables are measuring the same or similar underlying quantities? As the sample size decreases, a model will likely overfit the data. It then becomes important to start with our analysis and modeling with fewer variables if possible than the ones present int he data. 
+
+A statistically principled approach is to start by eliminating variables based on domain knowledge. This may be assisted by statistical data reduction methods such as clustering and redundancy analysis. 
+
+<br>
+
+## Clustering
+Here we assess clusters of independent variables.
+ 
+```{r, fig.width=5, fig.height=6.5}
+vc <- varclus (~ gross.pay + phi.h + position.cat + pressure + random.1 + random.2 + gross.pay.transform,
+              sim = 'hoeffding', 
+              data = hunt)
+
+par(family = 'Raleway')
+par(ps=9)
+plot(vc)
+```
+
+*Hierarchical cluster dendogram of all variables except production. The similarity matrix is based on the Hoeffding D statistics which will detect non-monotonic associations.*
+
+
+There are numerous methods to perform hierarchical clustering. It's always good practice to try different methods to see of the results are in the same ballpark. Let's do that with Hierarchical Clustering with P-Values via Multiscale Bootstrap:
+
+```{r, fig.width=5, fig.height=6, cache = TRUE, warning=FALSE, message=FALSE}
+## pvclust
+library(pvclust)
+hunt2 <- select(hunt, -production, -position.cat)
+cluster.bootstrap <- pvclust(hunt2, 
+                             nboot = 5000, 
+                             method.dist = "abscor",
+                             parallel = TRUE,
+                             iseed = 123)
+
+par(family = 'Raleway')
+par(ps=9)
+plot(cluster.bootstrap)
+pvrect(cluster.bootstrap)
+
+```
+
+From either cluster dendograms we can see how `gross.pay` and `gross.pay.transform` cluster together and, to a lesser extent, `phi.h`.
+
+<br>
+
+## Redundancy Analysis
+In redundancy analysis we look at which variable can be predicted with high confidence from any combination of the other variables. Those variables can then be safely omitted from further analysis. This approach is more robust than the pairwise correlation measures from before.
+
+```{r}
+redun(~ gross.pay + phi.h + I(position.cat) + pressure + random.1 + random.2 + gross.pay.transform,
+                r2 = 0.80,
+                type = 'adjusted',
+                tlinear = FALSE,
+                iterms=TRUE,
+                pc = TRUE,
+                data = hunt)
+
+```
+
+
+We've set the adjusted R^2^ value at 0.80. For instance, `gross.pay` and `gross.pay.transform` are redundant because they can be predicted with high confidence from all other predictors. 
+
+<br>
+
+## LASSO
+The previous methods achieved variable reduction without consideration of the response variable, `production`. This is a sound approach, however, we may wish to do variable selection within a regression model. LASSO (least absolute shrinkage and selection operator) achieves that by shrinking the model coefficients. If some coefficients are shrinked to zero, the LASSO effectively achieves variable selection. Shrinkage methods like the LASSO are useful to improve the performance of a model and control overfitting.
+
+There are several models besides the LASSO that allow built-in variable selection. 
+
+```{r, fig.width=7, fig.height=5}
+library(glmnet)
+
+position.cat <- model.matrix(hunt$production ~ hunt$position.cat)[, -1]
+x        <- as.matrix(data.frame(hunt$gross.pay, hunt$phi.h, hunt$pressure, hunt$random.1, hunt$random.2, hunt$gross.pay.transform, position.cat))
+
+## LASSO
+lasso <- glmnet(x, y = hunt$production,
+                alpha = 1,
+                family="gaussian", 
+                standardize = TRUE)
+
+cv.lasso <- cv.glmnet(x, y = hunt$production, 
+                      standardize = TRUE,
+                      type.measure = "mse",
+                      nfolds = 5,
+                      alpha = 1)
+
+lambda_min <- cv.lasso$lambda.min
+lambda_1se <- cv.lasso$lambda.1se
+coef(cv.lasso, s = lambda_1se)
+
+par(family = 'Raleway')
+par(ps=8)
+par(mfrow = c(1,2))
+plot(lasso, xvar = "lambda")
+plot(cv.lasso)
+
+```
+
+Looking at the table of coefficients, notice how `hunt.random.1` and `gross.pay.transform` have no coefficient. That's because it has been shrunk to zero, thus achieving variable selection. Our model suggests that these two variable are not useful in explaining changes in `production`. The coefficient for `hunt.random.2` is also nearly zero, so we could remove it as well. 
+
+<br>
+
+## Recursive feature elimination
+The last method we want to illustrate is that of recursive feature elimination. This is a model-based set of methods.
+
+
+```{r, cache = TRUE}
+## Recursive feature elimination
+library(Hmisc)
+library(randomForest)
+library(caret)
+
+## First normalize
+normalization <- preProcess(x)
+x <- predict(normalization, x)
+x <- as.data.frame(x)
+subsets <- c(1:7)
+
+
+set.seed(123)
+
+ctrl <- rfeControl(functions = lmFuncs,        ##use lm functions due to very small sample size
+                   method = "repeatedcv",      ##use bootstrap due to very small sample size. Otherwise, do repeatedcv
+                   returnResamp = "all",
+                   repeats = 50,
+                   verbose = FALSE,
+                   allowParallel = TRUE)
+
+lmProfile <- rfe(x, 
+                 hunt$production,
+                 sizes = subsets,
+                 rfeControl = ctrl)
+
+## Table of results
+kable(as.data.frame(lmProfile$results), 
+      "html",
+      align = "l",
+      digits = 3) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed")) %>%
+  row_spec(4, bold = TRUE, color = "black", background = "#FFFED0")
+```
+
+From the table we can see a model with 4 variables achieves the highest R^2^ and the lowest RMSE. Those 4 variables are: 
+
+
+```{r}
+caret::predictors(lmProfile)
+```
+
+We can, of course, plot the results for more immediacy:
+
+
+```{r, fig.width=11, fig.height=10}
+library(caret)
+trellis.par.set(caretTheme())
+trellis.par.set(grid.pars = list(fontfamily = "Raleway"))
+plot1 <- plot(lmProfile, type = c("g", "o"))
+plot2 <- plot(lmProfile, type = c("g", "o"), metric = "Rsquared")
+print(plot1, split=c(1,1,1,2), more=TRUE)
+print(plot2, split=c(1,2,1,2))
+
+```
+
+
+<br>
+
+## Summary of Variable Selection
+There is little consensus among researchers on what constitutes a sensible variable selection strategy. In fact, many authors are critical of several variable selection techniques and suggest utilizing domain knowledge coupled with variable selection blinded to Y (see Harrell, 2015).
+
+Our example is hardly demonstrative, since we are dealing with a very limited sample size. Nonetheless, we can summarize the results as follows:
+
+
+| Method                        	| No. of Variables Selected 	| Variable Removed                                                               	| Notes                                                    	|
+|-------------------------------	|---------------------------	|--------------------------------------------------------------------------------	|----------------------------------------------------------	|
+| Domain knowledge              	| 4                         	| `random.1`, `random.2`, `gross.pay.transform`                                  	| Baseline                                                 	|
+| Clustering                    	| NA                        	| `gross.pay` and `gross.pay.transform` can be represented by a  single variable 	| Only suggestive, not a true variable selection technique 	|
+| Redundancy Analysis           	| 5                         	| `gross.pay`, ` gross.pay.transform`                                            	|                                                          	|
+| LASSO                         	| 5                         	| `random.1`, `gross.pay.transform`                                              	| `random.2` was very close to zero                        	|
+| Recursive Feature Elimination 	| 4                         	| `random.1`, `random.2`, `gross.pay.transform`                                  	|                                                          	|
+
+
+From these limited data, recursive feature elimination performed best. There are many other variable selection strategies and we've only scratched the surface. Using domain knowledge **before** applying any statistical methods is probably preferred.
+
+```{r bib, include=FALSE}
+# KEEP THIS AT THE END OF THE DOCUMENT TO GENERATE A LOCAL bib FILE FOR PKGS USED
+knitr::write_bib(sub("^package:", "", grep("package", search(), value=TRUE)), file='skeleton.bib')
+```
