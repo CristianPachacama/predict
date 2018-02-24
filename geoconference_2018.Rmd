@@ -2,6 +2,7 @@
 title: "GeoConvention 2018 <br> May 7-9, Calgary, Canada"
 output: 
   markdowntemplates::skeleton:
+  keep_md: true
   self_contained: TRUE
   css: ts.css
   toc: TRUE
