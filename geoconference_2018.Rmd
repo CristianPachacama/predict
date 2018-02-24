@@ -1,15 +1,15 @@
 ---
-title: "GeoConvention 2018 <br> May 7-9, Calgary, Canada"
-output: 
-  markdowntemplates::skeleton:
-  keep_md: true
-  self_contained: TRUE
-  css: ts.css
-  toc: TRUE
-  smart: TRUE
-  lib_dir: libs
-  
+title: "GeoConvention 2018 <br> May 7-9, Calgary, Canada <br>  Title here"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::readthedown:
+    highlight: kate
+    css: custom.css
+    keep_md: true
+    self_contained: TRUE
+    lib_dir: libs
 ---
+
 
 
 
@@ -18,6 +18,9 @@ output:
 #-----------------------------------------------------------------------------------------#
 # SET COMMON OPTIONS
 #-----------------------------------------------------------------------------------------#
+library(knitr)
+library(rmdformats)
+
 options(max.print="75")
 
 knitr::opts_chunk$set(dev='svglite', 
