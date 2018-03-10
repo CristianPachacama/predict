@@ -1,12 +1,12 @@
 ---
 title: "GeoConvention 2018 <br> May 7-9, Calgary, Canada <br>  Title here"
-date: "2018-02-24"
+date: "2018-03-10"
 output:
   rmdformats::readthedown:
     highlight: kate
     css: custom.css
     keep_md: true
-    self_contained: TRUE
+    self_contained: FALSE
     lib_dir: libs
 ---
 
@@ -94,7 +94,7 @@ Suppose we are interested in assessing whether `production` changes according to
 
 From the boxplot below, it is not apparent whether there is a difference in production between `positions`:
 
-![](Figures/unnamed-chunk-4-1.svg)<!-- -->
+<img src="Figures/unnamed-chunk-4-1.svg" width="500px" />
 
 <br>
 
@@ -381,6 +381,28 @@ Our example is hardly demonstrative, since we are dealing with a very limited sa
 | Recursive Feature Elimination 	| 4                         	| `random.1`, `random.2`, `gross.pay.transform`                                  	|                                                          	|
 
 
-From these limited data, recursive feature elimination performed best. There are many other variable selection strategies and we've only scratched the surface. Using domain knowledge **before** applying any statistical methods is probably preferred.
+From these limited data, recursive feature elimination performed best. There are many other variable selection strategies and we've only scratched the surface. Using domain knowledge **before** applying any statistical methods is usually preferred.
+
+<br>
+
+# Exhaustive Search
+Another option to consider is that of performing an exhaustive search throughout the model space. Exhaustive search methods can be computationally taxing as "with more than a thousand models when p = 10 and a million when p = 20". [Tarr et al.](https://www.jstatsoft.org/article/view/v083i09) (2018) illustrate an implementation of exhaustive search through many bootstrap resamples: "if there exists a “correct” model of a particular model size it will be selected overwhelmingly more often than other models of the same size". 
+
+This approach is intended the assist the analyst with the choice of model, rather than providing an answer.
+
+![](Figures/unnamed-chunk-15-1.svg)<!-- -->
+
+The plots above illustrate what happens to the model fit measure (log-likelihood) when we remove a variable (higher is better). So for instance, in the upper left plot, there's a clear separation when we remove `random.1`, so that resamples that do not contain `random.1` perform better than model that do contain `random.1`.
+
+We can also gauge model stability by using bootstrap resamples
+
+![](Figures/unnamed-chunk-16-1.svg)<!-- -->![](Figures/unnamed-chunk-16-2.svg)<!-- -->
+
+
+# Outliers and Extremes
+
+
+
+
 
 

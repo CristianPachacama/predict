@@ -6,7 +6,7 @@ output:
     highlight: kate
     css: custom.css
     keep_md: true
-    self_contained: TRUE
+    self_contained: FALSE
     lib_dir: libs
 ---
 
@@ -118,7 +118,7 @@ Suppose we are interested in assessing whether `production` changes according to
 
 From the boxplot below, it is not apparent whether there is a difference in production between `positions`:
 
-```{r, fig.width=4, fig.height=3.5}
+```{r, fig.width=4, fig.height=3.5, out.width="500px"}
 g1 <- ggplot(hunt, aes(x = position.cat, y = production)) +
   geom_boxplot(fill = "grey60", alpha = 0.6, color = "grey60") +
   scale_x_discrete() + 
@@ -347,7 +347,7 @@ There are several models besides the LASSO that allow built-in variable selectio
 library(glmnet)
 
 position.cat <- model.matrix(hunt$production ~ hunt$position.cat)[, -1]
-x        <- as.matrix(data.frame(hunt$gross.pay, hunt$phi.h, hunt$pressure, hunt$random.1, hunt$random.2, hunt$gross.pay.transform, position.cat))
+x <- as.matrix(data.frame(hunt$gross.pay, hunt$phi.h, hunt$pressure, hunt$random.1, hunt$random.2, hunt$gross.pay.transform, position.cat))
 
 ## LASSO
 lasso <- glmnet(x, y = hunt$production,
@@ -456,7 +456,57 @@ Our example is hardly demonstrative, since we are dealing with a very limited sa
 | Recursive Feature Elimination 	| 4                         	| `random.1`, `random.2`, `gross.pay.transform`                                  	|                                                          	|
 
 
-From these limited data, recursive feature elimination performed best. There are many other variable selection strategies and we've only scratched the surface. Using domain knowledge **before** applying any statistical methods is probably preferred.
+From these limited data, recursive feature elimination performed best. There are many other variable selection strategies and we've only scratched the surface. Using domain knowledge **before** applying any statistical methods is usually preferred.
+
+<br>
+
+# Exhaustive Search
+Another option to consider is that of performing an exhaustive search throughout the model space. Exhaustive search methods can be computationally taxing as "with more than a thousand models when p = 10 and a million when p = 20". [Tarr et al.](https://www.jstatsoft.org/article/view/v083i09) (2018) illustrate an implementation of exhaustive search through many bootstrap resamples: "if there exists a “correct” model of a particular model size it will be selected overwhelmingly more often than other models of the same size". 
+
+This approach is intended the assist the analyst with the choice of model, rather than providing an answer.
+
+```{r, fig.width=8, fig.height=7, cache = TRUE, warning=FALSE, message=FALSE}
+library(mplot)
+
+f1 <- lm(production ~ gross.pay + phi.h + I(position.cat) + pressure + random.1 + random.2 + gross.pay.transform, data = hunt)
+vis <- vis(f1, B = 250, redundant = TRUE, nbest = 5, seed = 123) 
+
+p1 <- plot(vis, interactive = FALSE, highlight = "random.1", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 9)
+p2 <- plot(vis, interactive = FALSE, highlight = "random.2", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 9)
+p3 <- plot(vis, interactive = FALSE, highlight = "gross.pay", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 9)
+p4 <- plot(vis, interactive = FALSE, highlight = "phi.h", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 9)
+p5 <- plot(vis, interactive = FALSE, highlight = "pressure", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 9)
+p6 <- plot(vis, interactive = FALSE, highlight = "gross.pay.transform", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 9)
+
+p1 + p2 + p3 + p4 + p5 + p6 + plot_layout(ncol = 2)
+
+```
+
+The plots above illustrate what happens to the model fit measure (log-likelihood) when we remove a variable (higher is better). So for instance, in the upper left plot, there's a clear separation when we remove `random.1`, so that resamples that do not contain `random.1` perform better than model that do contain `random.1`.
+
+We can also gauge model stability by using bootstrap resamples
+
+```{r, fig.width=8, fig.height=7, cache = TRUE, warning=FALSE, message=FALSE}
+p1 <- plot(vis, interactive = FALSE, highlight = "random.1", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
+p2 <- plot(vis, interactive = FALSE, highlight = "random.2", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
+p3 <- plot(vis, interactive = FALSE, highlight = "gross.pay", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
+p4 <- plot(vis, interactive = FALSE, highlight = "phi.h", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
+p5 <- plot(vis, interactive = FALSE, highlight = "pressure", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
+p6 <- plot(vis, interactive = FALSE, highlight = "gross.pay.transform", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
+
+p1 + p2 + p3 + p4 + p5 + p6 + plot_layout(ncol = 2)
+
+
+
+plot(vis, interactive = FALSE, which = "vip") + theme_minimal(base_family = "Raleway", base_size = 9)
+```
+
+
+# Outliers and Extremes
+
+
+
+
 
 ```{r bib, include=FALSE}
 # KEEP THIS AT THE END OF THE DOCUMENT TO GENERATE A LOCAL bib FILE FOR PKGS USED
