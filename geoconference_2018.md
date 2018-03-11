@@ -394,10 +394,15 @@ This approach is intended the assist the analyst with the choice of model, rathe
 
 The plots above illustrate what happens to the model fit measure (log-likelihood) when we remove a variable (higher is better). So for instance, in the upper left plot, there's a clear separation when we remove `random.1`, so that resamples that do not contain `random.1` perform better than model that do contain `random.1`.
 
-We can also gauge model stability by using bootstrap resamples
 
-![](Figures/unnamed-chunk-16-1.svg)<!-- -->![](Figures/unnamed-chunk-16-2.svg)<!-- -->
 
+
+
+Finaly, we can investigate how variables are included as the penalty increases. In the plot `RV` is a random variable that can be used as reference.
+
+![](Figures/unnamed-chunk-17-1.svg)<!-- -->
+
+As the amount of penalty increases, it become clearer what variables remain: `lposition.cat` is the strongest predictor no matter the penalty. The three random variables and `gross.pay.transform` are the fastest to fall out from bootstrap resamples.
 
 # Outliers and Extremes
 

@@ -465,7 +465,7 @@ Another option to consider is that of performing an exhaustive search throughout
 
 This approach is intended the assist the analyst with the choice of model, rather than providing an answer.
 
-```{r, fig.width=8, fig.height=7, cache = TRUE, warning=FALSE, message=FALSE}
+```{r, fig.width=9, fig.height=8, cache = TRUE, warning=FALSE, message=FALSE}
 library(mplot)
 
 f1 <- lm(production ~ gross.pay + phi.h + I(position.cat) + pressure + random.1 + random.2 + gross.pay.transform, data = hunt)
@@ -484,9 +484,8 @@ p1 + p2 + p3 + p4 + p5 + p6 + plot_layout(ncol = 2)
 
 The plots above illustrate what happens to the model fit measure (log-likelihood) when we remove a variable (higher is better). So for instance, in the upper left plot, there's a clear separation when we remove `random.1`, so that resamples that do not contain `random.1` perform better than model that do contain `random.1`.
 
-We can also gauge model stability by using bootstrap resamples
 
-```{r, fig.width=8, fig.height=7, cache = TRUE, warning=FALSE, message=FALSE}
+```{r, fig.width=8, fig.height=7.5, cache = TRUE, out.width=800, warning=FALSE, message=FALSE, eval = FALSE}
 p1 <- plot(vis, interactive = FALSE, highlight = "random.1", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
 p2 <- plot(vis, interactive = FALSE, highlight = "random.2", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
 p3 <- plot(vis, interactive = FALSE, highlight = "gross.pay", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
@@ -495,12 +494,17 @@ p5 <- plot(vis, interactive = FALSE, highlight = "pressure", which = "boot") + t
 p6 <- plot(vis, interactive = FALSE, highlight = "gross.pay.transform", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
 
 p1 + p2 + p3 + p4 + p5 + p6 + plot_layout(ncol = 2)
-
-
-
-plot(vis, interactive = FALSE, which = "vip") + theme_minimal(base_family = "Raleway", base_size = 9)
 ```
 
+
+Finaly, we can investigate how variables are included as the penalty increases. In the plot `RV` is a random variable that can be used as reference.
+
+```{r, fig.width=9, fig.height=4, cache = TRUE, warning=FALSE, message=FALSE}
+plot(vis, interactive = FALSE, which = "vip") + theme_minimal(base_family = "Raleway", base_size = 9) + scale_color_viridis(discrete = TRUE, option = "D")
+
+```
+
+As the amount of penalty increases, it become clearer what variables remain: `lposition.cat` is the strongest predictor no matter the penalty. The three random variables and `gross.pay.transform` are the fastest to fall out from bootstrap resamples.
 
 # Outliers and Extremes
 
