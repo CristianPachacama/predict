@@ -1,6 +1,6 @@
 ---
-title: "GeoConvention 2018 <br> May 7-9, Calgary, Canada <br>  Title here"
-date: "`r Sys.Date()`"
+title: "GeoConvention 2018 <br>	Data Science Tools for Petroleum Exploration and Production"
+date: "May 7-9, Calgary, Canada"
 output:
   rmdformats::readthedown:
     code_folding: hide
@@ -156,8 +156,11 @@ g1 <- ggplot(hunt, aes(x = position.cat, y = production)) +
   scale_x_discrete() + 
   xlab("Position") +
   ylab("Production") +
-  theme_minimal(base_family = "Raleway", base_size = 9)
-
+  theme_minimal(base_family = "Raleway", base_size = 10) +
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA),
+        plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+  
+## Add lines
 dat <- ggplot_build(g1)$data[[1]]
 g1 + geom_segment(data=dat, aes(x=xmin, xend=xmax, y=middle, yend=middle), color = "coral2", size=1) 
 ```
@@ -249,8 +252,9 @@ corrplot(correlations,
 
 ```
 
-Above is the distance correlation matrix. Colored boxes represent statistically significant correlations at the 10% significance level. The correlation measure is able to detect that `gross.pay` is highly correlated to `gross.pay.transform` (they are algebraically related). Also, `gross.pay` is highly correlated with `production`.
+Above is the distance correlation matrix. Colored boxes represent statistically significant correlations at the 10% significance level. The correlation measure is able to detect that `gross.pay` is highly correlated to `gross.pay.transform` (they are algebraically related). Also, `gross.pay` is highly correlated with `production`. Notice that, unlike other correlation measures, distance correlation doe not compute direction (positive or negative correlation).
 
+<br>
 
 ### A Note on the Choice of Correlation
 Among measures of correlations capable of detecting non-linear association, MIC (maximal information criterion, Reshef et al.) has been touted as a powerful measures. However, several authors Kinney^2^, Simon^3^ point to a number of problems with MIC and suggest to utilize distance correlation instead: 
@@ -273,18 +277,22 @@ g1 <- ggplot(hunt, aes(y = production, x = gross.pay, colour = factor(position.c
   geom_point() +
   xlab("Gross Pay") +
   ylab("Production") +
-  theme_minimal(base_family = "Raleway", base_size = 10) +
+  theme_minimal(base_family = "Raleway", base_size = 11) +
   scale_color_discrete(guide = guide_legend(title = "Position")) +
-  theme(legend.position="none")
+  theme(legend.position="none") +
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA),
+        plot.background = element_rect(fill = "#FCFCFC", colour = NA))
 
 g2 <- ggplot(hunt, aes(y = production, x = phi.h, colour = factor(position.cat))) +
   stat_plsmo(fullrange = TRUE) + 
   geom_point() +
   xlab("Phi-h") +
   ylab("Production") +
-  theme_minimal(base_family = "Raleway", base_size = 10) +
+  theme_minimal(base_family = "Raleway", base_size = 11) +
   scale_color_discrete(guide = guide_legend(title = "Position")) +
-  theme(legend.position="none")
+  theme(legend.position="none") +
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA),
+        plot.background = element_rect(fill = "#FCFCFC", colour = NA))
 
 
 g3 <- ggplot(hunt, aes(y = production, x = pressure, colour = factor(position.cat))) +
@@ -292,27 +300,33 @@ g3 <- ggplot(hunt, aes(y = production, x = pressure, colour = factor(position.ca
   geom_point() +
   xlab("Pressure") +
   ylab("Production") +
-  theme_minimal(base_family = "Raleway", base_size = 10) +
+  theme_minimal(base_family = "Raleway", base_size = 11) +
   scale_color_discrete(guide = guide_legend(title = "Position")) +
-  theme(legend.position="none")
+  theme(legend.position="none") +
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA),
+        plot.background = element_rect(fill = "#FCFCFC", colour = NA))
 
 g4 <- ggplot(hunt, aes(y = production, x = random.1, colour = factor(position.cat))) +
   stat_plsmo(fullrange = TRUE) + 
   geom_point() +
   xlab("Random Var") +
   ylab("Production") +
-  theme_minimal(base_family = "Raleway", base_size = 10) +
+  theme_minimal(base_family = "Raleway", base_size = 11) +
   scale_color_discrete(guide = guide_legend(title = "Position")) +
-  theme(legend.position="none")
+  theme(legend.position="none") +
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA),
+        plot.background = element_rect(fill = "#FCFCFC", colour = NA))
 
 g5 <- ggplot(hunt, aes(y = production, x = gross.pay.transform, colour = factor(position.cat))) +
   stat_plsmo(fullrange = TRUE) + 
   geom_point() +
   xlab("Gross Pay (transformed)") +
   ylab("Production") +
-  theme_minimal(base_family = "Raleway", base_size = 10) +
+  theme_minimal(base_family = "Raleway", base_size = 11) +
   scale_color_discrete(guide = guide_legend(title = "Position")) +
-  theme(legend.position="none")
+  theme(legend.position="none") +
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA),
+        plot.background = element_rect(fill = "#FCFCFC", colour = NA))
 
 
 g1+g2+g3+g4+g5
@@ -341,6 +355,7 @@ vc <- varclus (~ gross.pay + phi.h + position.cat + pressure + random.1 + random
 
 par(family = 'Raleway',
     ps = 9,
+    par(bg = '#FCFCFC'),
     mar = c(0.2, 4, 1.5, 1.5))
 plot(vc)
 ```
@@ -361,6 +376,7 @@ cluster.bootstrap <- pvclust(hunt2,
                              iseed = 123)
 
 par(family = 'Raleway',
+    par(bg = '#FCFCFC'),
     ps = 9)
 plot(cluster.bootstrap)
 pvrect(cluster.bootstrap)
@@ -421,6 +437,7 @@ position.cat <- model.matrix(hunt$production ~ hunt$position.cat)[, -1]
 x <- as.matrix(data.frame(hunt$gross.pay, hunt$phi.h, hunt$pressure, hunt$random.1, hunt$random.2, hunt$gross.pay.transform, position.cat))
 
 ## LASSO
+registerDoParallel(cores=8)
 lasso <- glmnet(x, 
                 y = hunt$production,
                 alpha = 1,
@@ -439,6 +456,7 @@ cv.lasso <- cv.glmnet(x,
 lambda_min <- cv.lasso$lambda.min
 lambda_1se <- cv.lasso$lambda.1se
 
+
 ## Make table of coeff
 coef <- as.data.frame(as.matrix(coef(cv.lasso, s = lambda_1se))) %>% 
   rename(`Shrinked Coefficient` = !!names(.[1])) %>%
@@ -454,33 +472,70 @@ kable(coef, "html", align = "l", digits = 3) %>%
 
 Looking at the table of coefficients, notice how `hunt.random.1` and `gross.pay.transform` have no coefficient. That's because they have been shrunked to zero, thus achieving variable selection. Our model suggests that these two variable are not useful in explaining changes in `production`. The coefficient for `hunt.random.2` is also nearly zero, so we could remove it as well. 
 
-To gain more insight, it helps to visualize how fast coefficients are shrunked to zero (thus, excluded from the mdoel) as we increase the amount of shirinkage, $\lambda$. The range of $\lambda$ is chosen via [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)).
+To gain more insight, it helps to visualize how fast coefficients are shrunked to zero (thus, excluded from the mdoel) as we increase the amount of shirinkage, $\lambda$.
 
 
-```{r, fig.width=7, fig.height=6}
-## Plot results
-par(family = 'Raleway',
-    ps = 9,
-    mfrow = c(1, 1),
-    mar = c(3, 2.5, 1.5, 1.5))
+```{r, fig.width=5.9, fig.height=4.25, cache = TRUE, warning=FALSE, message=FALSE}
+## Prepare data for ggplot
+## Could have used (not pretty)
+# par(family = 'Raleway',
+#     ps = 9,
+#     par(bg = '#FCFCFC'),
+#     mfrow = c(1, 1),
+#     mar = c(3, 2.5, 1.5, 1.5))
+# 
+# plot_glmnet(lasso, 
+#             s = cv.lasso$lambda.min,
+#             xlab = "Log Lambda")
 
-plot_glmnet(lasso, 
-            s = cv.lasso$lambda.min,
-            xlab = "Log Lambda")
+beta <- coef(lasso)
 
-# plot(cv.lasso)
+lasso.data <- as.data.frame(as.matrix(beta)) %>%
+  tibble::rownames_to_column(var = "coef") %>%
+  reshape::melt(id = "coef") %>%
+  mutate(variable = as.numeric(gsub("s", "", variable))) %>%
+  mutate(lambda = lasso$lambda[variable + 1]) %>%
+  mutate(loglambda = log(lambda)) %>%
+  mutate(norm = apply(abs(beta[-1,]), 2, sum)[variable+1]) %>%
+  mutate(coef = gsub("hunt.", "", coef))
 
+plotly::ggplotly(ggplot(lasso.data[lasso.data$coef != "(Intercept)",], aes(loglambda, value, color = coef, linetype = coef)) + 
+  geom_line(size = 0.5) + 
+  xlab("Lambda (log scale)") +
+  ylab("Value of Coefficient") +
+  scale_x_reverse() +
+  guides(color = guide_legend(title = ""), 
+         linetype = guide_legend(title = "")) +
+  scale_color_viridis_d() +
+  geom_vline(xintercept = cv.lasso$lambda.min, color = "coral2", size = 0.5) +
+  theme_minimal(base_family = "Raleway", base_size = 12) +
+  theme(legend.key.width = unit(3, "lines")) +
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA),
+        plot.background = element_rect(fill = "#FCFCFC", colour = NA)) +
+  annotate("text",
+           x = cv.lasso$lambda.min+0.25, 
+           y = -8, 
+           label = round(cv.lasso$lambda.min, 3), 
+           angle = 90,
+           parse = TRUE))
 ```
 
-Moving from left to right, we see that if $\lambda$ (x-axis) is sufficiently large, all coefficients are shrunked to zero (y-axis), meaning all variables have been excluded. As we move to the right and $\lambda$ decreases, `gross.pay` enters the model, followed by `phi.h`. Moving to the far right, we see that when $\lambda$ is close to zero, little shrinkage occurs and no variable selection occurs. Throughout the graph, `random.1`, `random.2`, remain consistently close to the zero line. The vertical line at 0.052 is the value of $\lambda$ chosen by cross-validation that minimizes the loss function (this is what was used to generate the table above).
+<br>
 
-For this model the [loss function](https://en.wikipedia.org/wiki/Loss_function) is the [mean squared error](https://en.wikipedia.org/wiki/Mean_squared_error) (MSE). It is helpful to visualize how MSE changes as a function of $\lambda$, but more crucially, to visualize the error bars of each MSE. This graph should give us pause in picking a $\lambda$ value, since the majority of  $\lambda$ < `r round(cv.lasso$lambda.min, 3)` are nearly equivalent.
+Moving from left to right, we see that if $log(\lambda)$ (x-axis) is sufficiently large, all coefficients are shrunked to zero (y-axis), meaning all variables have been excluded. As we move to the right and $log(\lambda)$ decreases, `gross.pay` enters the model, followed by `phi.h`. Moving to the far right, we see that when $log(\lambda)$ decreases (i.e. $\lambda$ approaches 0), little shrinkage occurs and no variable selection occurs. 
+
+Throughout the graph, `random.1`, `random.2`, remain consistently close to the zero line, suggesting that no matter the value of $\lambda$, little weight is ever given to either. The vertical line at 0.052 is the value of $log(\lambda)$ chosen by cross-validation that minimizes the loss function (this is what was used to generate the table above).
+
+For this model the [loss function](https://en.wikipedia.org/wiki/Loss_function) is the [mean squared error ](https://en.wikipedia.org/wiki/Mean_squared_error) (MSE). The value of $\lambda$ minimizing the loss function is depicted by the red line and chosen via [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)).
+
+It is helpful to visualize how MSE changes as a function of $\lambda$, but more crucially, to visualize the error bars of each MSE. This graph should give us pause in picking a $\lambda$ value, since the majority of  $\lambda$ < `r round(cv.lasso$lambda.min, 3)` are nearly equivalent.
 
 
 ```{r, fig.width=7, fig.height=5}
 ## Plot results
 par(family = 'Raleway',
     ps = 9,
+    par(bg = '#FCFCFC'),
     mfrow = c(1, 1),
     mar = c(3, 2.5, 2, 1.5))
 
@@ -504,7 +559,8 @@ library(randomForest)
 library(caret)
 
 ## Parallelize
-# doMC::registerDomc(cores = 6)
+registerDoParallel(cores=8)
+
 
 ## First normalize
 normalization <- preProcess(x)
@@ -516,7 +572,7 @@ subsets <- c(1:7)
 set.seed(123)
 
 ctrl <- rfeControl(functions = lmFuncs,        ##use lm functions due to very small sample size
-                   method = "repeatedcv",      ##use bootstrap due to very small sample size. Otherwise, do repeatedcv
+                   method = "LOOCV",           ##be mindful of very small sample size 
                    returnResamp = "all",
                    repeats = 100,
                    verbose = FALSE,
@@ -533,7 +589,7 @@ kable(as.data.frame(lmProfile$results),
       align = "l",
       digits = 3) %>% 
   kable_styling(bootstrap_options = c("striped", "hover", "condensed")) %>%
-  row_spec(4, bold = TRUE, color = "black", background = "#FFFED0")
+  row_spec(4, bold = TRUE, color = "black", background = "#ccf5ec")
 
 ```
 
@@ -551,6 +607,7 @@ We can, of course, plot the results for more immediacy:
 library(caret)
 trellis.par.set(caretTheme())
 trellis.par.set(grid.pars = list(fontfamily = 'Raleway',
+                                 par(bg = '#FCFCFC'),
                                  ps = 9,
                                  mar = c(0.1, 0.1, 0.1, 0.1)))
 
@@ -576,30 +633,28 @@ library(mplot)
 f1 <- lm(production ~ gross.pay + phi.h + I(position.cat) + pressure + random.1 + random.2 + gross.pay.transform, data = hunt)
 vis <- vis(f1, B = 250, redundant = TRUE, nbest = 5, seed = 123) 
 
-p1 <- plot(vis, interactive = FALSE, highlight = "random.1", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank())
-p2 <- plot(vis, interactive = FALSE, highlight = "random.2", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank())
-p3 <- plot(vis, interactive = FALSE, highlight = "gross.pay", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank())
-p4 <- plot(vis, interactive = FALSE, highlight = "phi.h", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank())
-p5 <- plot(vis, interactive = FALSE, highlight = "pressure", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank())
-p6 <- plot(vis, interactive = FALSE, highlight = "gross.pay.transform", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank())
+p1 <- plot(vis, interactive = FALSE, highlight = "random.1", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank()) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p2 <- plot(vis, interactive = FALSE, highlight = "random.2", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank()) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p3 <- plot(vis, interactive = FALSE, highlight = "gross.pay", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank()) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p4 <- plot(vis, interactive = FALSE, highlight = "phi.h", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank()) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p5 <- plot(vis, interactive = FALSE, highlight = "pressure", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank()) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p6 <- plot(vis, interactive = FALSE, highlight = "gross.pay.transform", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank()) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA)) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
 p7 <- plot(vis, interactive = FALSE, highlight = "I.position.cat..2.3.", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 10) + theme(legend.position="bottom") + theme(legend.title=element_blank())
 
-
 p1 + p2 + p3 + p4 + p5 + p6 + p7 + plot_layout(ncol = 2)
-
 ```
 
 The plots above illustrate what happens to the model fit (log-likelihood) when we remove a variable (higher is better). For instance, in the upper left plot, there's a clear separation in model fit when we remove `random.1`, so that resamples that do not contain `random.1` perform better than model that do contain `random.1`.
 
 
 ```{r, fig.width=6, fig.height=5.5, cache = TRUE, out.width=800, warning=FALSE, message=FALSE, eval = FALSE}
-p1 <- plot(vis, interactive = FALSE, highlight = "random.1", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
-p2 <- plot(vis, interactive = FALSE, highlight = "random.2", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
-p3 <- plot(vis, interactive = FALSE, highlight = "gross.pay", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
-p4 <- plot(vis, interactive = FALSE, highlight = "phi.h", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
-p5 <- plot(vis, interactive = FALSE, highlight = "pressure", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
-p6 <- plot(vis, interactive = FALSE, highlight = "gross.pay.transform", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9)
-p7 <- plot(vis, interactive = FALSE, highlight = "I.position.cat..2.3.", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 9) + theme(legend.position="bottom") + theme(legend.title=element_blank())
+p1 <- plot(vis, interactive = FALSE, highlight = "random.1", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p2 <- plot(vis, interactive = FALSE, highlight = "random.2", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p3 <- plot(vis, interactive = FALSE, highlight = "gross.pay", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p4 <- plot(vis, interactive = FALSE, highlight = "phi.h", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p5 <- plot(vis, interactive = FALSE, highlight = "pressure", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p6 <- plot(vis, interactive = FALSE, highlight = "gross.pay.transform", which = "boot") + theme_minimal(base_family = "Raleway", base_size = 9) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+p7 <- plot(vis, interactive = FALSE, highlight = "I.position.cat..2.3.", which = "lvk") + theme_minimal(base_family = "Raleway", base_size = 9) + theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA)) + theme(legend.position="bottom") + theme(legend.title=element_blank())
 
 p1 + p2 + p3 + p4 + p5 + p6 + p7 + plot_layout(ncol = 2)
 ```
@@ -607,39 +662,189 @@ p1 + p2 + p3 + p4 + p5 + p6 + p7 + plot_layout(ncol = 2)
 
 Finaly, we can investigate how variables are included as the penalty increases. In the plot `RV` is a random variable that can be used as reference.
 
-```{r, fig.width=9, fig.height=4, cache = TRUE, warning=FALSE, message=FALSE}
-plot(vis, interactive = FALSE, which = "vip") + theme_minimal(base_family = "Raleway", base_size = 9) + scale_color_viridis(discrete = TRUE, option = "D")
-
+```{r, fig.width=5.9, fig.height=4.4, cache = TRUE, warning=FALSE, message=FALSE}
+plotly::ggplotly(plot(vis, interactive = FALSE, which = "vip") + 
+  scale_color_viridis(discrete = TRUE, option = "D")  + 
+  labs(color = "") +
+  theme_minimal(base_family = "Raleway", base_size = 12) + 
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA)))
 ```
 
+<br>
 As the amount of penalty increases, it become clearer what variables remain: `lposition.cat` is the strongest predictor no matter the penalty. The three random variables and `gross.pay.transform` (which contained noise) are the fastest to fall out from bootstrap resamples.
 
-```{r, fig.width=7, fig.height=3, cache = TRUE, warning=FALSE, message=FALSE}
+```{r, fig.width=5.9, fig.height=4.4, cache = TRUE, warning=FALSE, message=FALSE}
 library(mplot)
-af <- af(f1, B = 300, n.c = 100, seed = 123) 
-plot(af, best.only = TRUE, legend.position = "right", model.wrap = 4) + theme_minimal(base_family = "Raleway", base_size = 9) + scale_color_viridis(discrete = TRUE, option = "D")
+af <- af(f1, 
+         B = 500,
+         cores = 8,
+         n.c = 100, 
+         seed = 123) 
 
+plotly::ggplotly(plot(af, best.only = TRUE, legend.position = "right", model.wrap = 4) + 
+  scale_color_viridis(discrete = TRUE, option = "D") +
+  labs(color = "") +
+  theme_minimal(base_family = "Raleway", base_size = 12) +
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA)))
 ```
 
 p is the proportion of times a given model is selected for a given c value. 
 
 <br>
 
+## Sparse Principal Components
+Principal components have a long and rich history in statistics and several applied sciences. Principal components were first proposed by Harold Hotelling in the 1930's. Principal components allow us to describe our data with fewer new variables. These new variables are linear combinations of multiple variables. We call these new variables principal components. These components are derived in such a way to maximize the variation across variables. For a wonderful explanation of principal components see this [CrossValidated](https://stats.stackexchange.com/questions/2691/making-sense-of-principal-component-analysis-eigenvectors-eigenvalues) discussion.
+
+Sparse principal components use ideas similar to that of the LASSO in the sense that instead of utilizing all variables, only some are for some components (hence the term sparse). Therefore, as with the LASSO, some variables are shrunk to zero. Let's take a look at the loadings, that is, the weights of the linear combinations:
+
+```{r, fig.width=5.9, fig.height=5, cache = TRUE, warning=FALSE, message=FALSE}
+library(pcaPP) # robust PCA based on projection pursuit
+library(ggfortify)
+
+## Identify sparness parameter and plot
+oTPO <- opt.TPO(select(hunt, -production, -position),
+                 k.max = 4, 
+                 method = "sd", 
+                 center = median, 
+                 scale = sd, 
+                 maxiter = 3000)
+
+lambda <- oTPO$pc$lambda
+
+## Plot sparness parameter
+# par (mfrow = c (2, 4))
+# for (i in 1:4)
+#   plot (oTPO, k = i)
+# for (i in 1:4)
+#   plot(oTPO, k = i, f.x = "lambda")
+
+
+## Sparse PC
+set.seed (12)
+spc <- sPCAgrid(select(hunt, -production, -position),
+                 k = 4, 
+                 lambda = lambda, 
+                 method = "sd", 
+                 center = median, 
+                 scale = sd, 
+                 scores = TRUE,
+                 maxiter = 50) ##Sparse
+
+kable(spc$loadings[1:7,],
+  "html", align = "l", digits = 4, row.names = TRUE) %>%
+  kable_styling(bootstrap_options = c("hover", "condensed"), full_width = T, position = "center")
+```
+
+Notice how, in the loadings matrix, some weights were shrunk to zero.  `gross.pay` is assigned the greatest weight in PC1, while `position.cat` is assigned the greatest loading in PC2. Next, we are going to visualize the PC's:
+
+```{r, fig.width=5.9, fig.height=5, cache = TRUE, warning=FALSE, message=FALSE}
+## Plot PC
+plotly::ggplotly(autoplot(spc,
+         label = TRUE,
+         loadings.label = TRUE,
+         alpha = 0.08,
+         size = 7,         
+         color = "coral2") +
+  scale_x_continuous(limits = c(-15, 15)) +
+  scale_y_continuous(limits = c(-15, 15)) +
+  theme_minimal(base_family = "Raleway", base_size = 12) + 
+  theme(legend.position="bottom") + 
+  theme(legend.title=element_blank()) +
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA)) +
+  geom_vline(xintercept = 0, color = "grey10", size = 0.2) +
+  geom_hline(yintercept = 0, color = "grey10", size = 0.2))
+  
+  
+## Use Harrell's example:
+# ptrans <- transcan(~ gross.pay + phi.h + position.cat + pressure + random.1 + random.2 + gross.pay.transform,
+#                    imputed = TRUE, 
+#                    transformed = TRUE,
+#                    trantab = TRUE, 
+#                    pl = FALSE , 
+#                    show.na = TRUE, 
+#                    data = hunt, 
+#                    frac = 0.1, 
+#                    pr = FALSE)
+# 
+# summary(ptrans, digits=4)
+# 
+# s <- sPCAgrid(ptrans$transformed , 
+#               k = 6, 
+#               method='sd', 
+#               center = mean, 
+#               scale = sd,
+#               scores = TRUE, 
+#               maxiter = 10) 
+# 
+# 
+# ## Function to add variance explained
+# addscree <- function(x, npcs=min(10, length(x$sdev)), plotv=FALSE , col=1, offset=.8, adj=0, pr=FALSE) 
+#   { 
+#   vars <- x$sdev^2 
+#   cumv <- cumsum(vars)/sum(vars) 
+#   if(pr) print(cumv) 
+#   text(1:npcs, vars[1:npcs] + offset*par('cxy')[2], as.character(round(cumv[1:npcs], 2)), srt=45, adj=adj, cex=.65, xpd=NA, col=col)
+#   if(plotv) lines(1:npcs, vars[1:npcs], type='b', col=col)
+#   } 
+# 
+# s$loadings
+# 
+# pcs <- s$scores
+# aic <- numeric(6)
+# for(i in 1:6) { 
+#   ps <- pcs[,1:i] 
+#   aic[i] <- AIC(ols(hunt$production ~ ps)) 
+#   } 
+# 
+# 
+# par(family = 'Raleway',
+#     ps = 10,
+#     mfrow = c(1, 2),
+#     mar = c(3, 2.5, 2, 1.5))
+# 
+# plot(s, type='lines', ylim=c(0,3), main = "Screeplot: PC Contributions")
+# addscree(s) 
+# plot(1:6, aic, xlab='Number of Components Used', ylab='AIC', type='l', main = "How Well Do the PC Perform in Predicting Production") 
+# 
+# autoplot(s,
+#          label = TRUE,
+#          loadings.label = TRUE) +
+#   theme_minimal(base_family = "Raleway")
+
+```
+
+
+
+
+The plot above is called a biplot and it is filled with information:
+
+  * Principal component 1 accounts for 45% of the variation
+  * Principal component 2 accounts for 23% of the variation
+  * Together, the two principal components account for `r 45+23`% of the variation
+  * Points that are close to one another have similar values on the variables: for instance, rows 3, 5 and 7 are similar in their `gross.pay`, `gross.pay.transform` and `phi.h` profile, but very different compared to row 15. 
+  * 
+  
+One of the limitations of principal components analysis is that the linear combinations are not directly interpretable.  
+
+
+
+
+<br>
 
 ## Summary of Variable Selection
 There is little consensus among researchers on what constitutes a sensible variable selection strategy. In fact, many authors are critical of several variable selection techniques and suggest utilizing domain knowledge coupled with variable selection blinded to to the response^1^.
 
 Our example is hardly demonstrative, since we are dealing with a very limited sample size. Nonetheless, we can summarize the results as follows:
 
-| Method                        	| No. of Variables Selected 	| Variable Removed                                                               	| Notes                                                    	|
-|-------------------------------	|---------------------------	|--------------------------------------------------------------------------------	|----------------------------------------------------------	|
-| Domain knowledge              	| 4                         	| `random.1`, `random.2`, `gross.pay.transform`                                  	| Baseline                                                 	|
-| Clustering                    	| NA                        	| `gross.pay` and `gross.pay.transform` can be represented by a  single variable 	| Only suggestive, not a true variable selection technique 	|
-| Redundancy Analysis           	| 5                         	| `gross.pay`, ` gross.pay.transform`                                            	|                                                          	|
-| LASSO                         	| 5                         	| `random.1`, `gross.pay.transform`                                              	| `random.2` was very close to zero                        	|
-| Recursive Feature Elimination 	| 4                         	| `random.1`, `random.2`, `gross.pay.transform`                                  	|                                                          	|
-| Exhaustive search             	| 4                         	| `random.1`, `random.2`, `gross.pay.transform`                                  	| Based on visual inspection                               	|
-
+| Method                        | No. of Variables Selected | Variable Removed                                                               | Notes                                                    |
+|-------------------------------|---------------------------|--------------------------------------------------------------------------------|----------------------------------------------------------|
+| Domain knowledge              | 4                         | `random.1`, `random.2`, `gross.pay.transform`                                  | Baseline                                                 |
+| Clustering                    | NA                        | `gross.pay` and `gross.pay.transform` can be represented by a  single variable | Only suggestive, not a true variable selection technique |
+| Redundancy Analysis           | 5                         | `gross.pay`, ` gross.pay.transform`                                            |                                                          |
+| LASSO                         | 5                         | `random.1`, `gross.pay.transform`                                              | `random.2` was very close to zero                        |
+| Recursive Feature Elimination | 4                         | `random.1`, `random.2`, `gross.pay.transform`                                  |                                                          |
+| Exhaustive search             | 4                         | `random.1`, `random.2`, `gross.pay.transform`                                  | Based on visual inspection                               |
+| Sparse Principal Components   | 2                         | `random.1, `position.cat`                                                      | No a true variable selection technique                   |
 From these limited data, recursive feature elimination performed best. There are many variable selection strategies and we have only skimmed through a few of them. 
 
 Little consensus exists around variable selection. Harrell ^1,2^ states that 
@@ -657,7 +862,6 @@ Hence, using domain knowledge **before** applying any statistical methods is pre
 ^2^ See Harrell (2015), [CrossValidated](https://stats.stackexchange.com/questions/18214/why-is-variable-selection-necessary)  
 ^3^ See Kuhn et al. (2013), [Applied Predictive Modeling](https://www.springer.com/gp/book/9781461468486)
 
-<br>
 
 
 
@@ -689,7 +893,7 @@ From the equation we need an estimate for $d = \overline{x_{1}}-\overline{x_{2}}
 Mean production when geological feature is **present**: 48 (sd: 15.6)  
 Mean production when geological feature is **not present**: 27 (sd: 11.6)  
 
-It is always wise to solve for a range of plausible values, rather than a single point. In the graph below, we have included a range of values (34, 36, 38, 40, 42, 44 for µ1 and 24, 26, 28, 30, 32, 34 for µ2)^1^. 
+It is always wise to solve for a range of plausible values, rather than a single point. In the graph below, we have included a range of values: 34 to 44 for $\µ_1$ and 24 to 34 for $\µ_2$^1^. 
 
 Solving for the above equation yield the following curves^2,3^.  
 
@@ -749,7 +953,7 @@ ss1 <- structure(list(Power = c(0.807, 0.805, 0.803, 0.802, 0.8, 0.8,
 "N2", "µ1", "µ2", "µ1...µ2", "s1", "s2", "Alpha", "Beta"), class = "data.frame", row.names = c(NA, 
 -36L))
 
-## Or could use R
+## Or could have used R
 # pwr::pwr.t.test(d=(0-18)/14.14214,
 #                 power = 0.8,
 #                 sig.level = 0.10,
@@ -769,7 +973,10 @@ annotation_logticks(sides = "lr") +
   labs(y = "N1",
        color = "µ2",
        caption = "N2 assumed to be equal to N1") +
-  theme_minimal(base_family = "Raleway", base_size = 14))
+  theme_minimal(base_family = "Raleway", base_size = 14) +
+  theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA),
+        plot.background = element_rect(fill = "#FCFCFC", colour = NA))
+)
 
 ```
 
@@ -778,7 +985,7 @@ annotation_logticks(sides = "lr") +
 
 Therefore, if we believe that the *true* mean production with and without a geological feature is, say, 42 and 26 ($d=16$), respectively, we would need **at least 11 wells for each of the two geological features (total 22)** in order to have an 80% probability of detecting a difference in production as small as 16^4,6^. We are willing to accept a 10% chance of concluding there is a significant difference in production, when, in fact, there is none.
 
-The statistical field on sample size and power calculations is very rich and varied. Here, we have taken numerous liberties in order to illustrate the general approach.  Readers interested in this area are advised to work with statisticians^5^ and to utilize sample size and power calculation tools and libraries.
+The statistical field on sample size and power calculations is very rich. Here, we have taken numerous liberties in order to illustrate the general approach.  Readers interested in this area are advised to work with statisticians^5^ and to utilize sample size and power calculation tools or libraries.
 
 <br>
 
