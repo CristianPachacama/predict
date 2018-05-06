@@ -1,12 +1,13 @@
 ---
 title: "GeoConvention 2018 <br>	Data Science Tools for Petroleum Exploration and Production"
+author: "Thomas Speidel"
 date: "May 7-9, Calgary, Canada"
 output:
   rmdformats::readthedown:
     code_folding: hide
     numbered_sections: TRUE
     highlight: kate
-    css: custom.css
+    css: custom2.css
     keep_md: true
     self_contained: TRUE
     lib_dir: libs
@@ -81,8 +82,16 @@ library("doParallel")
 
 ```
 
+# Preamble
+This tutorial is meant to accompany a talk given by Matteo Niccoli and myself (Thomas Speidel) at the **2018 geoconvention** in Calgary, Canada titled [Data science tools for petroleum exploration and production](https://www.geoconvention.com/uploads/2018abstracts/290_GC2018_Data_science_tools_for_petroleum_e_and_p.pdf). Many of the ideas were inspired by Nicooli's past work. See for instance, [Machine learning in geoscience with scikit-learn - notebook 1](https://github.com/mycarta/predict/blob/master/Geoscience_ML_notebook_1.ipynb). 
+
+This tutorial was created using the [open-source language R](https://en.wikipedia.org/wiki/R_(programming_language)#CRAN). However, most of the methods illustrated can be done in [Python](https://en.wikipedia.org/wiki/Python_(programming_language)). See Niccoli's implementation of some of these methods in the Python environment. See for instance the implementation of [distance correlation](https://github.com/mycarta/Niccoli_Speidel_2018_Geoconvention/blob/master/Python_heatmap_and_distance_correlation.ipynb)in Python.
+
+
+<br><br>
+
 # Description of the Example Dataset
-We will illustrate a number of methodologies on the dataset by Hunt^1^. Niccoli^2^ illustrated a number of statistical techniques on this dataset in a series of notebooks. As stated: "the target variable to be predicted, Y, is oil production (measured in tens of barrels of oil per day) from a marine barrier sand". Below, is a sample of the data:
+We will illustrate a number of methodologies on the data set by Hunt^1^. Niccoli^2^ illustrated a number of statistical techniques on this data set in a series of notebooks. As stated: "the target variable to be predicted, Y, is oil production (measured in tens of barrels of oil per day) from a marine barrier sand". Below, is a sample of the data:
 
 
 ```{r, eval=TRUE,  message=FALSE, cache=FALSE}
@@ -116,7 +125,7 @@ datatable(hunt,
             searchHighlight = TRUE,
             buttons = c('copy', 'csv', 'excel', 'print'))) %>%
   formatStyle("production",
-    background = styleColorBar(hunt$production, '#00D09E'),
+    background = styleColorBar(hunt$production, '#99cfca'),
     backgroundSize = '100% 80%',
     backgroundRepeat = 'no-repeat')
 
@@ -156,7 +165,7 @@ g1 <- ggplot(hunt, aes(x = position.cat, y = production)) +
   scale_x_discrete() + 
   xlab("Position") +
   ylab("Production") +
-  theme_minimal(base_family = "Raleway", base_size = 10) +
+  theme_minimal(base_family = "Raleway", base_size = 11) +
   theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA),
         plot.background = element_rect(fill = "#FCFCFC", colour = NA))
   
@@ -268,7 +277,7 @@ Among measures of correlations capable of detecting non-linear association, MIC 
 <br><br>
 
 # Smoothers
-Correlation matrices are useful to visualize combinations of pairwise correlations. There is, however, more information to be had by plotting the data and adding a trend line. One of the most flexible is Cleveland's [LOESS](https://en.wikipedia.org/wiki/Local_regression) (locally weighted scatterplot smoothing). Let's plot the LOESS curves for each variable against production, separate for each `position`.
+Correlation matrices are useful to visualize combinations of pairwise correlations. There is, however, more information to be had by plotting the data and adding a trend line. One of the most flexible is Cleveland's [LOESS](https://en.wikipedia.org/wiki/Local_regression) (locally weighted scatter plot smoothing). Let's plot the LOESS curves for each variable against production, separate for each `position`.
 
 
 ```{r, fig.width=10, fig.height=8.5, fig.align="center"}
@@ -333,7 +342,7 @@ g1+g2+g3+g4+g5
 
 ```
 
-*Scatterplots of production against each variable by position (red: blue:). A LOESS curve was added to highlight the overall trend.*
+*Scatter plots of production against each variable by position (red: blue:). A LOESS curve was added to highlight the overall trend.*
 
 <br><br>
 
@@ -345,7 +354,7 @@ A statistically principled approach is to start by eliminating variables based o
 <br>
 
 ## Clustering
-Here we assess clusters of independent variables. We do so blinded to the response variable, `production`, in order to avoid creating bias. In cluster analysis, the objective is to identify vairables that are measuring the same underlying phenomenon. If they exists and supported by domain knowledge, one could argue for removing one of them.
+Here we assess clusters of independent variables. We do so blinded to the response variable, `production`, in order to avoid creating bias. In cluster analysis, the objective is to identify variables that are measuring the same underlying phenomenon. If they exists and supported by domain knowledge, one could argue for removing one of them.
 
  
 ```{r, fig.width=4.5, fig.height=5, fig.align="center"}
@@ -357,6 +366,7 @@ par(family = 'Raleway',
     ps = 9,
     par(bg = '#FCFCFC'),
     mar = c(0.2, 4, 1.5, 1.5))
+
 plot(vc)
 ```
 
@@ -393,12 +403,13 @@ From either cluster dendograms we can see how `gross.pay` and `gross.pay.transfo
 
 ```{r}
 redun <- redun(~ gross.pay + phi.h + I(position.cat) + pressure + random.1 + random.2 + gross.pay.transform,
-                r2 = 0.75,
+                r2 = 0.70,
                 type = 'adjusted',
                 tlinear = FALSE,
                 iterms = TRUE,
                 pc = TRUE,
                 data = hunt)
+
 ```
 
 In redundancy analysis we look at which variable can be predicted with high confidence from any combination of the other variables. Those variables can then be safely omitted from further analysis. This approach is more robust than the pairwise correlation measures from before. We've set the adjusted R^2^ value at `r redun$r2`.
@@ -424,9 +435,9 @@ can be removed because they are predicted from all the remaining variables. The 
 <br>
 
 ## LASSO
-The previous methods achieved variable reduction without consideration of the response variable, `production`. This is a sound approach, however, we may wish to do variable selection within a regression model. [LASSO](https://en.wikipedia.org/wiki/Lasso_(statistics)) (least absolute shrinkage and selection operator) achieves that by shrinking the model coefficients. The primary purpose of shrinkage methods is that of improving predictive accuracy. However, if coefficients are shrinked to zero, the LASSO effectively achieves variable selection. 
+The previous methods achieved variable reduction without consideration of the response variable, `production`. This is a sound approach, however, we may wish to do variable selection within a regression model. [LASSO](https://en.wikipedia.org/wiki/Lasso_(statistics)) (least absolute shrinkage and selection operator) achieves that by shrinking the model coefficients. The primary purpose of shrinkage methods is that of improving predictive accuracy. However, if coefficients are shrunk to zero, the LASSO effectively achieves variable selection. 
 
-Fitting a LASSO model to the data, yield the following shrinked coefficients. 
+Fitting a LASSO model to the data, yield the following shrunk coefficients. 
 
 
 ```{r}
@@ -470,9 +481,9 @@ kable(coef, "html", align = "l", digits = 3) %>%
 ```
 
 
-Looking at the table of coefficients, notice how `hunt.random.1` and `gross.pay.transform` have no coefficient. That's because they have been shrunked to zero, thus achieving variable selection. Our model suggests that these two variable are not useful in explaining changes in `production`. The coefficient for `hunt.random.2` is also nearly zero, so we could remove it as well. 
+Looking at the table of coefficients, notice how `hunt.random.1` and `gross.pay.transform` have no coefficient. That's because they have been shrunk to zero, thus achieving variable selection. Our model suggests that these two variable are not useful in explaining changes in `production`. The coefficient for `hunt.random.2` is also nearly zero, so we could remove it as well. 
 
-To gain more insight, it helps to visualize how fast coefficients are shrunked to zero (thus, excluded from the mdoel) as we increase the amount of shirinkage, $\lambda$.
+To gain more insight, it helps to visualize how fast coefficients are shrunk to zero (thus, excluded from the model) as we increase the amount of shrinkage, $\lambda$.
 
 
 ```{r, fig.width=5.9, fig.height=4.25, cache = TRUE, warning=FALSE, message=FALSE}
@@ -522,7 +533,7 @@ plotly::ggplotly(ggplot(lasso.data[lasso.data$coef != "(Intercept)",], aes(logla
 
 <br>
 
-Moving from left to right, we see that if $log(\lambda)$ (x-axis) is sufficiently large, all coefficients are shrunked to zero (y-axis), meaning all variables have been excluded. As we move to the right and $log(\lambda)$ decreases, `gross.pay` enters the model, followed by `phi.h`. Moving to the far right, we see that when $log(\lambda)$ decreases (i.e. $\lambda$ approaches 0), little shrinkage occurs and no variable selection occurs. 
+Moving from left to right, we see that if $log(\lambda)$ (x-axis) is sufficiently large, all coefficients are shrunk to zero (y-axis), meaning all variables have been excluded. As we move to the right and $log(\lambda)$ decreases, `gross.pay` enters the model, followed by `phi.h`. Moving to the far right, we see that when $log(\lambda)$ decreases (i.e. $\lambda$ approaches 0), little shrinkage occurs and no variable selection occurs. 
 
 Throughout the graph, `random.1`, `random.2`, remain consistently close to the zero line, suggesting that no matter the value of $\lambda$, little weight is ever given to either. The vertical line at 0.052 is the value of $log(\lambda)$ chosen by cross-validation that minimizes the loss function (this is what was used to generate the table above).
 
@@ -549,7 +560,7 @@ plot(cv.lasso, xlab = "Log Lambda")
 ## Recursive feature elimination
 There is no shortage of methods on variable selection coming from the **Machine Learning** literature.  Recursive feature elimination^1^ is a model-based method. The technical details are beyond the scope of this article.
 
-The majority of model-based variable selection methods perform better with normalized data (substract the mean and divide by the standard deviation).
+The majority of model-based variable selection methods perform better with normalized data (subtract the mean and divide by the standard deviation).
 
 
 ```{r, cache = TRUE}
@@ -660,7 +671,7 @@ p1 + p2 + p3 + p4 + p5 + p6 + p7 + plot_layout(ncol = 2)
 ```
 
 
-Finaly, we can investigate how variables are included as the penalty increases. In the plot `RV` is a random variable that can be used as reference.
+Finally, we can investigate how variables are included as the penalty increases. In the plot `RV` is a random variable that can be used as reference.
 
 ```{r, fig.width=5.9, fig.height=4.4, cache = TRUE, warning=FALSE, message=FALSE}
 plotly::ggplotly(plot(vis, interactive = FALSE, which = "vip") + 
@@ -671,6 +682,7 @@ plotly::ggplotly(plot(vis, interactive = FALSE, which = "vip") +
 ```
 
 <br>
+
 As the amount of penalty increases, it become clearer what variables remain: `lposition.cat` is the strongest predictor no matter the penalty. The three random variables and `gross.pay.transform` (which contained noise) are the fastest to fall out from bootstrap resamples.
 
 ```{r, fig.width=5.9, fig.height=4.4, cache = TRUE, warning=FALSE, message=FALSE}
@@ -695,11 +707,10 @@ p is the proportion of times a given model is selected for a given c value.
 ## Sparse Principal Components
 Principal components have a long and rich history in statistics and several applied sciences. Principal components were first proposed by Harold Hotelling in the 1930's. Principal components allow us to describe our data with fewer new variables. These new variables are linear combinations of multiple variables. We call these new variables principal components. These components are derived in such a way to maximize the variation across variables. For a wonderful explanation of principal components see this [CrossValidated](https://stats.stackexchange.com/questions/2691/making-sense-of-principal-component-analysis-eigenvectors-eigenvalues) discussion.
 
-Sparse principal components use ideas similar to that of the LASSO in the sense that instead of utilizing all variables, only some are for some components (hence the term sparse). Therefore, as with the LASSO, some variables are shrunk to zero. Let's take a look at the loadings, that is, the weights of the linear combinations:
+Sparse principal components use ideas similar to that of the LASSO in the sense that instead of utilizing all variables, only some are for some components (hence the term sparse). Therefore, as with the LASSO, some variables are shrunk to zero. Let's take a look at the **loadings**, that is, the weights of the linear combinations^1^:
 
 ```{r, fig.width=5.9, fig.height=5, cache = TRUE, warning=FALSE, message=FALSE}
 library(pcaPP) # robust PCA based on projection pursuit
-library(ggfortify)
 
 ## Identify sparness parameter and plot
 oTPO <- opt.TPO(select(hunt, -production, -position),
@@ -733,27 +744,34 @@ spc <- sPCAgrid(select(hunt, -production, -position),
 kable(spc$loadings[1:7,],
   "html", align = "l", digits = 4, row.names = TRUE) %>%
   kable_styling(bootstrap_options = c("hover", "condensed"), full_width = T, position = "center")
+
 ```
 
 Notice how, in the loadings matrix, some weights were shrunk to zero.  `gross.pay` is assigned the greatest weight in PC1, while `position.cat` is assigned the greatest loading in PC2. Next, we are going to visualize the PC's:
 
 ```{r, fig.width=5.9, fig.height=5, cache = TRUE, warning=FALSE, message=FALSE}
 ## Plot PC
-plotly::ggplotly(autoplot(spc,
-         label = TRUE,
-         loadings.label = TRUE,
-         alpha = 0.08,
-         size = 7,         
-         color = "coral2") +
-  scale_x_continuous(limits = c(-15, 15)) +
-  scale_y_continuous(limits = c(-15, 15)) +
-  theme_minimal(base_family = "Raleway", base_size = 12) + 
+library(ggbiplot)
+
+plotly::ggplotly(ggbiplot(spc, 
+         obs.scale = 1, 
+         var.scale = 1,
+         ellipse = TRUE, 
+         circle = FALSE,
+         alpha = 0,
+         varname.size = 4.5, 
+         labels.size = 6) +
+  geom_point(aes(colour =  cut2(hunt$production, g = 4)), size = 6, alpha = 0.75) +
+  geom_text(aes(label = rownames(hunt)), hjust = 0, vjust = 0, size = 4) +  
+  scale_color_viridis_d(direction = -1) +
+  scale_x_continuous(limits = c(-60, 60)) +
+  scale_y_continuous(limits = c(-60, 60)) +
+  labs(colour = "Production") +
+  theme_minimal(base_family = "Raleway", base_size = 14) + 
   theme(legend.position="bottom") + 
-  theme(legend.title=element_blank()) +
   theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA)) +
   geom_vline(xintercept = 0, color = "grey10", size = 0.2) +
   geom_hline(yintercept = 0, color = "grey10", size = 0.2))
-  
   
 ## Use Harrell's example:
 # ptrans <- transcan(~ gross.pay + phi.h + position.cat + pressure + random.1 + random.2 + gross.pay.transform,
@@ -778,14 +796,14 @@ plotly::ggplotly(autoplot(spc,
 # 
 # 
 # ## Function to add variance explained
-# addscree <- function(x, npcs=min(10, length(x$sdev)), plotv=FALSE , col=1, offset=.8, adj=0, pr=FALSE) 
-#   { 
-#   vars <- x$sdev^2 
-#   cumv <- cumsum(vars)/sum(vars) 
-#   if(pr) print(cumv) 
-#   text(1:npcs, vars[1:npcs] + offset*par('cxy')[2], as.character(round(cumv[1:npcs], 2)), srt=45, adj=adj, cex=.65, xpd=NA, col=col)
-#   if(plotv) lines(1:npcs, vars[1:npcs], type='b', col=col)
-#   } 
+addscree <- function(x, npcs=min(10, length(x$sdev)), plotv=FALSE , col=1, offset=.8, adj=0, pr=FALSE)
+  {
+  vars <- x$sdev^2
+  cumv <- cumsum(vars)/sum(vars)
+  if(pr) print(cumv)
+  text(1:npcs, vars[1:npcs] + offset*par('cxy')[2], as.character(round(cumv[1:npcs], 2)), srt=45, adj=adj, cex=.65, xpd=NA, col=col)
+  if(plotv) lines(1:npcs, vars[1:npcs], type='b', col=col)
+  }
 # 
 # s$loadings
 # 
@@ -810,10 +828,9 @@ plotly::ggplotly(autoplot(spc,
 #          label = TRUE,
 #          loadings.label = TRUE) +
 #   theme_minimal(base_family = "Raleway")
-
 ```
 
-
+<br>
 
 
 The plot above is called a biplot and it is filled with information:
@@ -822,12 +839,16 @@ The plot above is called a biplot and it is filled with information:
   * Principal component 2 accounts for 23% of the variation
   * Together, the two principal components account for `r 45+23`% of the variation
   * Points that are close to one another have similar values on the variables: for instance, rows 3, 5 and 7 are similar in their `gross.pay`, `gross.pay.transform` and `phi.h` profile, but very different compared to row 15. 
-  * 
+  * The correlation between the three vectors `gross.pay.transform`, `gross.pay` and `phi.h` is high as represented by the small angle.
+  * The correlation between the three vectors `gross.pay.transform`, `gross.pay` and `phi.h` is positive because all vectors are pointing in similar directions.
+  * Take point 18 (far right) we would expect this observation to have one of the highest value for `gross.pay.transform`, `gross.pay` and `phi.h`
+  * Production is color coded and there seems to be a cluster of low production associated with low `gross.pay.transform`, `gross.pay` and `phi.h`
   
-One of the limitations of principal components analysis is that the linear combinations are not directly interpretable.  
+One of the limitations of principal components analysis is that the new PC are not directly interpretable.  
 
+<br>
 
-
+^1^ We will focus on the first two principal components.
 
 <br>
 
@@ -844,7 +865,7 @@ Our example is hardly demonstrative, since we are dealing with a very limited sa
 | LASSO                         | 5                         | `random.1`, `gross.pay.transform`                                              | `random.2` was very close to zero                        |
 | Recursive Feature Elimination | 4                         | `random.1`, `random.2`, `gross.pay.transform`                                  |                                                          |
 | Exhaustive search             | 4                         | `random.1`, `random.2`, `gross.pay.transform`                                  | Based on visual inspection                               |
-| Sparse Principal Components   | 2                         | `random.1, `position.cat`                                                      | No a true variable selection technique                   |
+| Sparse Principal Components   | 2                         | `random.1`, `position.cat`                                                     | No a true variable selection technique                   |
 From these limited data, recursive feature elimination performed best. There are many variable selection strategies and we have only skimmed through a few of them. 
 
 Little consensus exists around variable selection. Harrell ^1,2^ states that 
@@ -855,7 +876,7 @@ Kuhn^3^ confirms by writing:
 
 > This underscores the idea that feature selection is a poor method for determining the most significant variables in the *data*, as opposed to which predictors mostly influenced the *model*. Different models will score the predictors differently. To assess which predictors have individual associations with the outcome, common classical statistical methods are far more appropriate. 
 
-Hence, using domain knowledge **before** applying any statistical methods is preferrable. If statistical or ML approaches are to be used, it is best to start with methods blinded to the outcome. Shrinkage methods, such as the LASSO, can be used as a next step.
+Hence, using domain knowledge **before** applying any statistical methods is preferable. If statistical or ML approaches are to be used, it is best to start with methods blinded to the outcome. Shrinkage methods, such as the LASSO, can be used as a next step.
 
 
 ^1^ See Harrell (2015), [Regression Modeling Strategies](https://www.springer.com/gb/book/9781441929181)  
@@ -888,12 +909,12 @@ $$\normalsize n = \frac{(Z_{\alpha /2}+Z_{\beta})^{2}\times 2\sigma ^2}{d^{2}}$$
 
 where $Z_{\alpha /2}$ is the critical value from the normal distribution at α/2 (for a two-sided test); $Z_{\beta}$ is the critical value from the normal distribution at β; $\sigma ^2$ is the population variance (or pooled variance); $d$ is the difference between the two means.
 
-From the equation we need an estimate for $d = \overline{x_{1}}-\overline{x_{2}}$ and the population standard deviation, $\sigma$. Normally, we take these estimates from other similar analysis or datasets. Suppose from previous analysis we know that:
+From the equation we need an estimate for $d = \overline{x_{1}}-\overline{x_{2}}$ and the population standard deviation, $\sigma$. Normally, we take these estimates from other similar analysis or data sets. Suppose from previous analysis we know that:
 
-Mean production when geological feature is **present**: 48 (sd: 15.6)  
-Mean production when geological feature is **not present**: 27 (sd: 11.6)  
+Mean production when geological feature is **present**: 48 (SD: 15.6)  
+Mean production when geological feature is **not present**: 27 (SD: 11.6)  
 
-It is always wise to solve for a range of plausible values, rather than a single point. In the graph below, we have included a range of values: 34 to 44 for $\µ_1$ and 24 to 34 for $\µ_2$^1^. 
+It is always wise to solve for a range of plausible values, rather than a single point. In the graph below, we have included a range of values: 34 to 44 for $\mu_1$ and 24 to 34 for $\mu_2$ ^1^. 
 
 Solving for the above equation yield the following curves^2,3^.  
 
@@ -999,21 +1020,67 @@ The statistical field on sample size and power calculations is very rich. Here, 
 <br><br>
 
 # Regression
-We utilize the information we gained in variabe selection section to hypothesize a model.
 
+In this section we will fit a regression model to better understand changes in production. We are going to utilize the previous findings of the [variable selection](#variable-selection) by entertaining a model with `gross.pay`, `phi.h`, `pressure` and `position.cat`. Notice that the sample size is much too small to fit a model with all these variables. A general rule of thumb suggests we need 15-20 observations per variable; therefore, we would need about 80 observations (wells in this case): far short of what we have.
 
-## Linear Models
-We start 
+Recall from the [correlation matrix](#distance-correlation) `gross.pay` and `phi.h` are highly correlated. This is going to be a problem when we interpret the model because of [collinearity](https://en.wikipedia.org/wiki/Multicollinearity). Collinearity *makes it difficult to estimate and interpret a particular regression coefficient because the data have little information about the effect of changing one variable while holding another (highly correlated) variable constant* (Harrell, 2015).
+
+So, **which variable should we keep in the model, `gross.pay` or `phi.h`?**   
+A sensible strategy is to consider domain knowledge about the physics to guide which one should be in the model. One also needs to consider costs: if one variable is significantly more expensive to collect data for in the future, we might want stop further consideration. However, suppose we have no preference. Let's revisit [redundancy analysis](#redundancy-analysis), but this time focus only on a subset of variable:
 
 ```{r}
-w <- spearman2(production ~ phi.h + gross.pay + pressure + position.cat, p=2, data = hunt)  ## Faster
+(redun.2 <- redun(~ gross.pay + phi.h + I(position.cat) + pressure, 
+     r2 = 0.70,
+     data = hunt))
+```
+
+What does this tells us? That it's marginally easier to predict `gross.pay` from all other variables (R^2^=`r round(redun.2$rsquared, 3)`) than it is to predict `phi.h`. Therefore, we are better off removing `gross.pay` and keep `phi.h` instead.
+
+<br>
+
+## Non Linearities
+It is generally wise **not** to assume a system, especially in nature, behaves linearly. The major limitation here, however, is sample size: entertaining non-linearities is *more expensive* on the data. Thus, it is important to be very selective. A general technique is to entertain non-linearities only for those variables that have enough predictive power. 
+
+Once again, recall the [correlation matrix](#distance-correlation). Which variables among `phi.h`, `position.cat` and `pressure` have the highest correlation with the response, `production`? That would be `phi.h` (distance correlation=`r round(energy::dcor(hunt$production, hunt$phi.h), 2)`). Therefore, we will assign more degrees of freedom to `phi.h`, on the grounds that missing a non-linear relationship here would be costlier.
+
+How exactly are we going to make a variable non-linear? Several approaches exist. One flexible approach is based on restricted cubic splines. The details are beyond the scope of this tutorial. Interested readers can refer to Davis^1^ who articulates the intution and provides a fascinating historical perspective.
+
+^1^ *Davis, P. (1996), [B-Splines and Geometric Design](https://users.wpi.edu/~pwdavis/sinews/spline17.htm).*  
+
+<br>
+
+## Linear Model
+Armed with this information, it'time to fit a linear model. But before we do that, we need to decide on the kind of model. The size of the data is much too small to consider models from the Machine Learning field^1^. 
+
+We could try least squares regression, but our response, `production`, is a rate and we could run into problems. Beta regression, poisson or negative binomial may provide better approaches. Here we will illusrate a robust approach, that of **ordinal regression**, a type of semi-parametric model.
+
+
+^1^ *Van der Ploeg et al. [Modern modelling techniques are data hungry: a simulation study for predicting dichotomous endpoints](https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/1471-2288-14-137)*
+
+
+
+```{r, results="asis"}
+##The third approach is to treat it the proportion as a censored continous variable.  The censoring means that you don’t have information below 0 or above 1.  For example, perhaps the plant would spread even more if it hadn’t run out of land.  If you take this approach, you would run the model as a two-limit tobit model (Long, 1997).  This approach works best if there isn’t an excessive amount of censoring (values of 0 and 1).
 
 dd <- datadist (hunt); options(datadist = 'dd')
-f1 <- orm(production ~ position.cat + pressure + gross.pay, data = hunt)
 
-ggplot(Predict(f1))
+f1 <- orm(production ~ 
+          rcs(phi.h, 3) +
+          position.cat +
+          pressure,
+          data = hunt,
+          family = "probit",
+          x=TRUE, y=TRUE)
 
+options(prType="html")
+f1
 
+# f1.resid <- resid(f1)
+# plot(hunt$phi.h, f1.resid, cex=0.4); lines(lowess(hunt$phi.h, f1.resid)); abline(h=0, col=2,lty=2)
+
+## Robust estimates
+# set.seed(123)
+# f1.boot <- bootcov(f1, coef.reps = TRUE, B = 2000)
 
 ## Prepare quantiles
 bar <- Mean(f1)
@@ -1022,13 +1089,80 @@ p50 <- function(x) qu(0.50, x)
 p25 <- function(x) qu(0.25, x)
 p75 <- function(x) qu(0.75, x)
 
+```
 
-## Point estimates
-ggplot(Predict(f1,
-             fun = bar,
-             conf.int = TRUE))
+
+```{r, fig.width=5.9, fig.height=4.25, cache = TRUE, warning=FALSE, message=FALSE}
+# Point estimates
+ggplot(Predict(f1, fun = bar),
+       colfill = "gray50",
+       adj.subtitle = FALSE,
+       addlayer = theme_minimal(base_family = "Raleway", base_size = 14) +
+       labs(y = "Production"))
 
 ```
+
+```{r, fig.width=5.5, fig.height=4.0, cache = FALSE, warning=FALSE, message=FALSE}
+## Heatmap
+heatmap <- Predict(f1, phi.h, pressure, position.cat, fun = bar, np = 90)
+heatmap <- as.data.frame(heatmap)
+
+plotly::ggplotly(ggplot(heatmap, aes(phi.h, pressure)) + 
+     geom_tile(aes(fill = yhat), color = "white")  + 
+     scale_fill_viridis(discrete = FALSE, option = "D") +
+     facet_grid(.~position.cat) +
+     labs(x = "\nphi.h",
+          y = "Pressure",
+          fill = "Predicted\nMean\nProduction",
+          title = "Predicted Production",
+          subtitle = "Predicted mean production as a function of pressure, phi.h and position",
+          caption = "Insufficient data to estimate production when pressure is 15.") + 
+     scale_x_continuous(breaks = seq(0, 160, 20)) +
+     scale_y_continuous(breaks = seq(0, 20, 2)) +
+     theme_minimal() +
+     theme(plot.title = element_text(face = "bold", hjust = 0, vjust = 0.8, colour = "#3C3C3C", size = 22, family = "Raleway")) +
+     theme(plot.subtitle = element_text(hjust = 0, vjust = 0.8, colour = "#3C3C3C", size = 10, family = "Raleway")) +
+     theme(plot.caption = element_text(size = 7, family = "Raleway")) +
+     theme(axis.title = element_text()) +
+     theme(axis.title.y = element_text(size = 13, angle = 90, family = "Raleway")) +
+     theme(axis.title.x = element_text(size = 13, angle = 0, family = "Raleway")) +
+     theme(axis.text.x = element_text(size = 10, family = "Raleway", color = "black", margin = margin(r=0))) +
+     theme(axis.text.y = element_text(size = 10, family = "Raleway", color = "black")) +
+     theme(legend.text = element_text(size = 8, family = "Raleway")) +
+     theme(legend.title = element_text(size = 9, family = "Raleway", hjust = 0.5)) +
+     theme(legend.position = "right") +
+     theme(axis.line = element_blank(), 
+           axis.ticks.y = element_blank(),
+           panel.grid.major = element_blank(),
+           panel.grid.minor = element_blank(),
+           panel.border = element_blank()) +
+     guides(colour = guide_legend(ncol = 1)) +
+     theme(legend.title.align=0) +
+     theme(panel.background = element_rect(fill = "#FCFCFC", colour = NA), plot.background = element_rect(fill = "#FCFCFC", colour = NA)))
+ 
+```
+
+
+<br><br>
+
+# Colophon
+This document and the analysis presented were performed in  [R](https://en.wikipedia.org/wiki/R_(programming_language)), a programming language and software environment for statistical computing and graphics.
+
+* Graphs were plotted using the [ggplot2](https://en.wikipedia.org/wiki/Ggplot2) package, Lattice or D3 libraries, such as [Plotly](https://en.wikipedia.org/wiki/Plotly)
+
+* The HTML template is [readthedown](https://github.com/juba/rmdformats)
+
+* The document uses the [Raleway font family](https://fonts.google.com/specimen/Raleway)
+
+* [Rstudio](https://rstudio.org) was used as the R IDE
+
+Last updated on `r Sys.time()`
+
+
+<img style="margin: 25px 20px 1px 1px;" src="Figures/Rlogo.png" width="10%">
+<img style="margin: 25px 20px 1px 10px;" src="Figures/rstudio.png" width="21%">
+<img style="margin: 25px 20px 1px 10px;" src="Figures/plotly.png" width="20%">
+<img style="margin: 25px 20px 1px 10px;" src="Figures/ggplot.png" width="8%">
 
 
 ```{r bib, include=FALSE}
