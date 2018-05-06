@@ -9,7 +9,7 @@
 *.utf8.md
 *.knit.md
 .bib
-/Matteo/
+/*Matteo
 *geoconference_2018.html
 *.t171
 *geoconference_2018_PPT_Graphs.R
