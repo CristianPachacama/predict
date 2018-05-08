@@ -1142,6 +1142,12 @@ plotly::ggplotly(ggplot(heatmap, aes(phi.h, pressure)) +
  
 ```
 
+```{r}
+Predict(f1, phi.h = 24, position.cat = "[2,3]", pressure = 16, fun = bar)
+Predict(f1, phi.h = 24, position.cat = "[2,3]", pressure = 16, fun = p25)
+Predict(f1, phi.h = 24, position.cat = "[2,3]", pressure = 16, fun = p75)
+
+```
 
 <br><br>
 
